@@ -1,4 +1,3 @@
---USE [AdventureWorks2019]
 USE [AdventureWorks2022]
 GO
 
@@ -27,12 +26,22 @@ SELECT	SalesOrderHeader.SalesOrderID NumeroPedido
   FROM Sales.SalesOrderHeader
   LEFT JOIN Sales.CurrencyRate ON SalesOrderHeader.CurrencyRateID = CurrencyRate.CurrencyRateID
 
+  */
 -- Cabeçalho e itens
 
+-- SELECT distinct DATEDIFF(DAY, "Data criação", "Prazo de entrega") FROM (
+
 SELECT	SalesOrderHeader.SalesOrderID NumeroPedido
-		,DATEADD(YEAR, 8, SalesOrderHeader.OrderDate) "Data criação"
-		,DATEADD(YEAR, 8, SalesOrderHeader.DueDate) "Prazo de entrega"
-		,DATEADD(YEAR, 8, SalesOrderHeader.ShipDate) "Data de envio"
+		,DATEADD(YEAR, 10, SalesOrderHeader.OrderDate) "Data criação"
+		--,DATEADD(YEAR, 10, SalesOrderHeader.DueDate) "Prazo de entrega"
+		,DATEADD(YEAR, 10,
+			DATEADD(
+				DAY,
+				CAST(RIGHT(CAST(SalesOrderHeader.SalesOrderID AS VARCHAR(20)), 1) AS INT) * 2,
+				SalesOrderHeader.DueDate
+			)
+		) "Prazo de entrega"
+		,DATEADD(YEAR, 10, SalesOrderHeader.ShipDate) "Data de envio"
 		,SalesOrderHeader.Status CodigoStatus
 		,SalesOrderHeader.CustomerID CodigoCliente
 		,SalesOrderHeader.SalesPersonID CodigoVendedor
@@ -76,11 +85,15 @@ SELECT	SalesOrderHeader.SalesOrderID NumeroPedido
   LEFT JOIN Person.Address       ON SalesOrderHeader.BillToAddressID = Address.AddressID
   LEFT JOIN Person.StateProvince ON Address.StateProvinceID = StateProvince.StateProvinceID
   LEFT JOIN Person.CountryRegion ON StateProvince.CountryRegionCode = CountryRegion.CountryRegionCode 
-*/
+
+--  ) AS XX
+--*/
   
 
---Custo padrão por produto
+--  SELECT DISTINCT Status FROM Sales.SalesOrderHeader
 
+--Custo padrão por produto
+/*
 SELECT ProductID "CodigoProduto", CAST(DATEADD(YEAR, 8, StartDate) AS DATE) "DataInicio", CAST(CASE WHEN EndDate IS NULL THEN CAST(GETDATE() AS DATE) ELSE DATEADD(YEAR, 8, EndDate) END AS DATE) "DataFim", StandardCost "Custo padrão" 
 FROM Production.ProductCostHistory
 UNION ALL
@@ -95,7 +108,7 @@ LEFT JOIN (SELECT ProductId, MAX(EndDate) AS EndDate
 WHERE NOT EXISTS (SELECT 1 FROM Production.ProductCostHistory WHERE Product.ProductID = ProductCostHistory.ProductID AND ProductCostHistory.EndDate IS NULL)
 AND Product.StandardCost  > 0 
 --AND ProductID = 766
- 
+ */
 
 -- SELECT SalesPersonID, COUNT(*) FROM SALES.SalesOrderHeader GROUP BY SalesPersonID ORDER BY 1
 -- SELECT COUNT(*) FROM SALES.SalesOrderHeader WHERE SalesPersonID IS NULL
@@ -112,7 +125,7 @@ AND Product.StandardCost  > 0
 	   X.DataMeta, 
        SalesPerson.SalesQuota "Valor meta de venda"
   FROM Sales.SalesPerson
-  JOIN (SELECT DISTINCT EOMONTH(OrderDate, 0) DataMeta FROM Sales.SalesOrderHeader) AS X ON 1 = 1
+  JOIN (SELECT DISTINCT DATEADD(YEAR, 10, EOMONTH(OrderDate, 0)) DataMeta FROM Sales.SalesOrderHeader) AS X ON 1 = 1
  WHERE SalesPerson.SalesQuota IS NOT NULL
 */
 
